@@ -11,6 +11,9 @@ Powodują zmianę stanów gry. Pozostałe obiekty, ze względu na brak stanów g
 #include <SFML/Graphics.hpp>
 #include <SFML/Audio.hpp>
 
+#include "Button.h"
+#include "Listeners.h"
+
 #include <iostream>
 #include <string>
 #include <vector>
@@ -92,41 +95,6 @@ class ResourceManager
 
 
 		std::map<Identifier, std::unique_ptr<Resource>>	mResourceMap;
-};
-
-class Button
-{
-public:
-	int move; //wartość, jaką zwraca po kliknięciu przycisku klasa
-	std::string bname;
-	sf::Sprite bsprite; //wygląd naciśniętego przycisku; 
-	sf::IntRect barea;
-	bool activated;
-	
-	
-	void Load (sf::Texture& texture, sf::IntRect areatexture, sf::IntRect area, std::string name, int wheremove)
-	{
-		this->move=wheremove;
-		this->bsprite.setTexture(texture);
-		this->bsprite.setTextureRect(areatexture);
-		this->barea=area;
-		this->activated=false;
-		this->bname=name;
-	};
-
-	Button ()
-	{
-	}
-
-	Button (sf::Texture& texture, sf::IntRect areatexture, sf::IntRect area, std::string name, int wheremove)
-	{
-		move=wheremove;
-		bsprite.setTexture(texture);
-		bsprite.setTextureRect(areatexture);
-		barea=area;
-		activated=false;
-		bname=name;
-	};
 };
 
 class GUI
@@ -325,7 +293,7 @@ public:
 	}
 };
 
-//State_Extra - używa resourcemanager, przechowuje dane potrzebne do wyświetlenia menu extras
+//State_Extra - używa resourcemanager, przechowuje dane potrzebne do wyświetlenia menu extras; korzysta z właściwości wzorca projektowego obserwator
 class State_Extra: public GameState
 {
 private:
@@ -341,6 +309,10 @@ public:
 			sf::Text text;
 			sf::Event event;
 			int i;
+
+			EventListeners number1;
+			ChangeListeners number2;
+			MoveListeners number3;
 
 		//~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
@@ -422,6 +394,10 @@ public:
 			ExtrasMenu.MenuButtons[1].Load(ExtrasMenu.ButtonsTexture, sf::IntRect(800,0,800,600), Authors, "Autorzy", 1);
 			ExtrasMenu.MenuButtons[2].Load(ExtrasMenu.ButtonsTexture, sf::IntRect(1600,0,800,600), Return, "Powrot", 0);
 
+			//Dodawanie obserwatorów
+			ExtrasMenu.MenuButtons[0].AddObservator(&number1);
+			ExtrasMenu.MenuButtons[1].AddObservator(&number2);
+			ExtrasMenu.MenuButtons[2].AddObservator(&number3);
 
 			window.setFramerateLimit(60);
 			bgmusic.play();
@@ -452,7 +428,8 @@ public:
 					  for (int i=0; i<=((ExtrasMenu.MenuAmount)-1); ++i)
 					  {
 						if ((ExtrasMenu.MenuButtons[i].activated)==true)
-							return (ExtrasMenu.MenuButtons[i].move);
+							ExtrasMenu.MenuButtons[i].CallObservators();
+							//return (ExtrasMenu.MenuButtons[i].move);
 					  }
 				}
 }
